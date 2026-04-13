@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FL Emergency Phone</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #f26822;
+      --orange-dim: rgba(242,104,34,0.12);
+      --orange-border: #7a2e0a;
+      --dark: #111111;
+      --card: #1c1c1c;
+      --card2: #222222;
+      --border: #2d2d2d;
+      --text: #efefef;
+      --muted: #888888;
+      --red: #f87171;
+      --red-bg: #2a1010;
+      --red-border: #7f1d1d;
+      --amber: #fbbf24;
+      --amber-bg: #241e08;
+      --amber-border: #78350f;
+      --green: #4ade80;
+      --green-bg: #0b1f10;
+      --green-border: #14532d;
+      --blue: #93c5fd;
+      --blue-bg: #0d1825;
+      --blue-border: #1e3a5f;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100dvh;
+    }
+
+    /* ===== PIN SCREEN ===== */
+    #pin-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 32px 24px;
+      gap: 0;
+    }
+
+    .pin-fl {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 5px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .pin-wordmark {
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .pin-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 44px;
+    }
+
+    .pin-dots {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .pin-dot.filled {
+      background: var(--orange);
+      border-color: var(--orange);
+    }
+
+    .pin-dot.error {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .pin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 76px);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .pin-btn {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 22px;
+      font-family: var(--mono);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, border-color 0.1s, transform 0.1s;
+      user-select: none;
+    }
+
+    .pin-btn:active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+      transform: scale(0.93);
+    }
+
+    .pin-btn.pin-del {
+      font-size: 17px;
+      color: var(--muted);
+    }
+
+    .pin-btn.pin-empty {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pin-error-msg {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--red);
+      min-height: 18px;
+      text-align: center;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-10px); }
+      40%       { transform: translateX(10px); }
+      60%       { transform: translateX(-7px); }
+      80%       { transform: translateX(5px); }
+    }
+
+    .pin-dots.shake {
+      animation: shake 0.4s ease;
+    }
+
+    /* ===== MAIN APP ===== */
+    #app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    /* Header */
+    #app-header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--dark);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--orange);
+      letter-spacing: 3px;
+      flex-shrink: 0;
+    }
+
+    .brand-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      line-height: 1.3;
+    }
+
+    .header-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--red);
+      border: 1px solid var(--red-border);
+      background: var(--red-bg);
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* Emergency strip */
+    #emergency-strip {
+      position: sticky;
+      top: 49px;
+      z-index: 199;
+      background: #0a0a0a;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    #emergency-strip::-webkit-scrollbar { display: none; }
+
+    .e-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      padding: 7px 13px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      gap: 1px;
+    }
+
+    .e-btn-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .e-btn-num {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .e-btn.e-red { background: #dc2626; color: #fff; }
+    .e-btn.e-orange { background: var(--orange); color: #fff; }
+    .e-btn.e-dark { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+
+    /* Search */
+    #search-wrap {
+      padding: 10px 14px;
+      background: var(--dark);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #search-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: var(--sans);
+      outline: none;
+      appearance: none;
+    }
+
+    #search-input:focus { border-color: var(--orange); }
+    #search-input::placeholder { color: var(--muted); }
+
+    /* Sections */
+    #sections { flex: 1; padding-bottom: 60px; }
+
+    .section { border-bottom: 1px solid var(--border); }
+    .section.hidden { display: none; }
+
+    .sec-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text);
+      text-align: left;
+      -webkit-appearance: none;
+    }
+
+    .sec-btn:active { background: rgba(255,255,255,0.03); }
+
+    .tier-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .tb-red    { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-border); }
+    .tb-amber  { background: var(--amber-bg);  color: var(--amber); border: 1px solid var(--amber-border); }
+    .tb-green  { background: var(--green-bg);  color: var(--green); border: 1px solid var(--green-border); }
+    .tb-blue   { background: var(--blue-bg);   color: var(--blue);  border: 1px solid var(--blue-border); }
+    .tb-orange { background: #1f0e02; color: var(--orange); border: 1px solid var(--orange-border); }
+
+    .sec-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .chevron {
+      font-size: 14px;
+      color: var(--muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .section.open .chevron { transform: rotate(180deg); }
+
+    .sec-body { display: none; padding: 2px 14px 20px; }
+    .section.open .sec-body { display: block; }
+
+    /* --- Content styles --- */
+    h3 {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 18px 0 8px;
+    }
+
+    h3:first-child { margin-top: 4px; }
+
+    p {
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 8px;
+      line-height: 1.65;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    /* Step list */
+    .steps {
+      list-style: none;
+      counter-reset: s;
+      margin: 4px 0 8px;
+    }
+
+    .steps li {
+      counter-increment: s;
+      display: flex;
+      gap: 11px;
+      margin-bottom: 11px;
+      line-height: 1.55;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .steps li::before {
+      content: counter(s);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--orange);
+      background: var(--orange-dim);
+      border-radius: 50%;
+      min-width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Triage tiers */
+    .triage-tier { border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+
+    .triage-hdr {
+      padding: 9px 13px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .tt1 .triage-hdr { background: var(--red-bg);   color: var(--red);   }
+    .tt2 .triage-hdr { background: var(--amber-bg);  color: var(--amber); }
+    .tt3 .triage-hdr { background: var(--green-bg);  color: var(--green); }
+
+    .triage-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .triage-item:last-child { border-bottom: none; }
+
+    .ti-sit {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .ti-act {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .ti-act strong { color: var(--text); }
+
+    /* Contact rows */
+    .crow {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .crow:last-child { border-bottom: none; }
+
+    .cname {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .cnum {
+      font-family: var(--mono);
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    /* Credential rows */
+    .drow {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .drow:last-child { border-bottom: none; }
+
+    .dlabel {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .dval {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--blue);
+      word-break: break-all;
+    }
+
+    /* Links */
+    .tel {
+      color: var(--orange);
+      text-decoration: none;
+      font-family: var(--mono);
+    }
+
+    .tel:hover { text-decoration: underline; }
+
+    .eml {
+      color: var(--blue);
+      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .eml:hover { text-decoration: underline; }
+
+    /* Info boxes */
+    .ibox {
+      background: rgba(248,113,113,0.08);
+      border: 1px solid var(--red-border);
+      border-radius: 7px;
+      padding: 10px 13px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+
+    .ibox.amber {
+      background: rgba(251,191,36,0.07);
+      border-color: var(--amber-border);
+      color: #fde68a;
+    }
+
+    .ibox.blue {
+      background: rgba(147,197,253,0.07);
+      border-color: var(--blue-border);
+      color: #bfdbfe;
+    }
+
+    .warn-bar {
+      background: rgba(248,113,113,0.09);
+      border-left: 3px solid var(--red);
+      padding: 9px 12px;
+      margin: 10px 0;
+      font-size: 13px;
+      color: #fca5a5;
+      border-radius: 0 5px 5px 0;
+      line-height: 1.5;
+    }
+
+    /* Decision table */
+    .dtable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 6px 0 12px;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .dtable td {
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.45;
+      background: var(--card);
+    }
+
+    .dtable tr:last-child td { border-bottom: none; }
+    .dtable td:first-child { color: var(--muted); width: 48%; }
+    .dtable td.sit-red { color: #fca5a5; }
+    .dtable td.sit-amber { color: #fde68a; }
+    .dtable td.sit-green { color: #86efac; }
+
+    /* Reference table */
+    .rtable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 6px 0;
+    }
+
+    .rtable td {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.45;
+      color: #ccc;
+    }
+
+    .rtable tr:last-child td { border-bottom: none; }
+    .rtable td:first-child { color: var(--orange); font-family: var(--mono); font-size: 12px; font-weight: 600; width: 90px; padding-right: 10px; }
+
+    /* No results */
+    #no-results {
+      padding: 50px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      display: none;
+    }
+
+    .mono { font-family: var(--mono); }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ===== PIN SCREEN ===== -->
+<div id="pin-screen">
+  <div class="pin-fl">FL</div>
+  <div class="pin-wordmark">Future Learning</div>
+  <div class="pin-sub">Emergency Phone · Confidential</div>
+
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+
+  <div class="pin-grid">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn pin-empty" disabled aria-hidden="true"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn pin-del" onclick="pinDelete()">⌫</button>
+  </div>
+
+  <div class="pin-error-msg" id="pin-err"></div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" hidden>
+
+  <header id="app-header">
+    <div class="brand">
+      <span class="brand-mark">FL</span>
+      <div class="brand-sep"></div>
+      <span class="brand-title">Emergency Phone<br>Procedures Guide</span>
+    </div>
+    <span class="header-badge">Confidential</span>
+  </header>
+
+  <!-- Emergency call buttons -->
+  <div id="emergency-strip">
+    <a href="tel:999" class="e-btn e-red">
+      <span class="e-btn-lbl">Emergency</span>
+      <span class="e-btn-num">999</span>
+    </a>
+    <a href="tel:112" class="e-btn e-red">
+      <span class="e-btn-lbl">Emergency</span>
+      <span class="e-btn-num">112</span>
+    </a>
+    <a href="tel:0818776315" class="e-btn e-orange">
+      <span class="e-btn-lbl">TUSLA OOH</span>
+      <span class="e-btn-num">0818 776 315</span>
+    </a>
+    <a href="tel:0871037744" class="e-btn e-dark">
+      <span class="e-btn-lbl">Emergency Phone</span>
+      <span class="e-btn-num">087 103 7744</span>
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div id="search-wrap">
+    <input
+      type="search"
+      id="search-input"
+      placeholder="Search procedures, contacts, scenarios…"
+      oninput="handleSearch(this.value)"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+    >
+  </div>
+
+  <!-- Accordion Sections -->
+  <main id="sections">
+
+    <!-- TRIAGE -->
+    <div class="section open" data-s="triage tier 1 2 3 immediate tonight tomorrow act emergency missing child protection fire self-harm curfew arrival host family medical transfer pairing schedule complaint query">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-red">Triage</span>
+        <span class="sec-title">Triage — Decide What To Do First</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+
+        <div class="triage-tier tt1">
+          <div class="triage-hdr">🔴 Tier 1 — Act Immediately · Call 999 or escalate now</div>
+          <div class="triage-item">
+            <div class="ti-sit">Medical emergency — unconscious, not breathing, severe injury, anaphylaxis</div>
+            <div class="ti-act">→ <strong>Call <a href="tel:999" class="tel">999</a>/<a href="tel:112" class="tel">112</a>.</strong> Then notify Felipe.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">YL student missing — under 18, not located after 30 min</div>
+            <div class="ti-act">→ <strong>See Missing Student section.</strong> Call GL, HF, Felipe. Call 999 if risk of danger.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Child protection concern — immediate risk of harm</div>
+            <div class="ti-act">→ <strong>See Child Protection section.</strong> Call 999 → Peter Lahiff → TUSLA: <a href="tel:0818776315" class="tel">0818 776 315</a></div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Fire or evacuation</div>
+            <div class="ti-act">→ <strong>See Fire &amp; Evacuation section.</strong> Call 999. Confirm all evacuated. Notify Felipe.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Self-harm or suicidal crisis — student in immediate danger</div>
+            <div class="ti-act">→ <strong>See Mental Health section.</strong> Ensure someone is with student. Call 999.</div>
+          </div>
+        </div>
+
+        <div class="triage-tier tt2">
+          <div class="triage-hdr">🟡 Tier 2 — Resolve Tonight · Needs action before morning</div>
+          <div class="triage-item">
+            <div class="ti-sit">Student not home by curfew (22:00)</div>
+            <div class="ti-act">→ <strong>See Curfew Breach section.</strong> Contact GL immediately.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Arrival issue — can't find staff or transport</div>
+            <div class="ti-act">→ <strong>See Arrival Issues section.</strong> Check live schedule and Booking Form.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Host family not home / not at departure</div>
+            <div class="ti-act">→ <strong>See Arrival Issues / Mini-Stay section.</strong> Contact HF, book taxi if needed.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Student medical issue — urgent but not life-threatening</div>
+            <div class="ti-act">→ <strong>See Medical section.</strong> GP OOH contacts listed there.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Transfer issue — taxi or bus problem</div>
+            <div class="ti-act">→ <strong>See Transport section.</strong> Check schedule for booking details.</div>
+          </div>
+        </div>
+
+        <div class="triage-tier tt3">
+          <div class="triage-hdr">🟢 Tier 3 — Email &amp; Deal Tomorrow · Reassure caller, send follow-up email</div>
+          <div class="triage-item">
+            <div class="ti-sit">Request to change host family pairing</div>
+            <div class="ti-act">→ Cannot be actioned out of hours. Email accommodation team. See Who to Email section.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Schedule, activity, or class queries</div>
+            <div class="ti-act">→ Cannot be changed out of hours. Email the relevant coordinator.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Activity change requests from GL</div>
+            <div class="ti-act">→ Only possible during working hours. See Mini-Stay section.</div>
+          </div>
+          <div class="triage-item">
+            <div class="ti-sit">Complaints or general queries</div>
+            <div class="ti-act">→ Listen, reassure, email relevant manager.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CHILD PROTECTION -->
+    <div class="section" data-s="child protection TUSLA peter lahiff safeguarding abuse neglect risk harm concern disclosure back-up host move under 18 designated">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-red">Immediate</span>
+        <span class="sec-title">Child Protection</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="ibox">The welfare and safety of the child comes first. If in any doubt, escalate — do not wait until morning.</div>
+
+        <h3>What Constitutes a Concern</h3>
+        <p>A child protection concern arises when you have reasonable grounds to believe a child (under 18) has been, is being, or is at risk of being: physically abused, emotionally abused, sexually abused, or neglected. Includes a direct disclosure, a concern raised by a GL or HF, or behaviour you observe.</p>
+
+        <h3>What To Do — Follow In Order</h3>
+        <ol class="steps">
+          <li>Listen carefully. Do not promise confidentiality. Do not press for details or ask leading questions.</li>
+          <li>Do not confront or contact the person allegedly responsible for the harm.</li>
+          <li>Ensure the student is in a safe location. If the concern involves the host family, consider activating the back-up host listed on the Booking Form.</li>
+          <li>Contact <strong>Peter Lahiff</strong> immediately (number saved on phone). He is FL's designated child protection person.</li>
+          <li>If child is in immediate danger and Peter is unreachable: call <a href="tel:999" class="tel">999</a>, then TUSLA out-of-hours: <a href="tel:0818776315" class="tel">0818 776 315</a>.</li>
+          <li>Make a written record — what was reported, by whom, and when. Email to Peter and Felipe before ending the call.</li>
+        </ol>
+
+        <h3>Moving Student to Back-Up Host</h3>
+        <p>The back-up host is listed on the Booking Form. Any move must be done in consultation with Peter Lahiff — not unilaterally. Alert Peter on the possibility of a TUSLA report; that decision is his to make with management.</p>
+
+        <h3>Key Contacts</h3>
+        <div class="crow">
+          <div class="cname">Peter Lahiff — FL Designated Child Protection Person</div>
+          <div class="cnum">Number saved on emergency phone</div>
+        </div>
+        <div class="crow">
+          <div class="cname">TUSLA Out-of-Hours — 6pm–7am &amp; weekends / bank holidays</div>
+          <div class="cnum"><a href="tel:0818776315" class="tel">0818 776 315</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Emergency Services — immediate risk</div>
+          <div class="cnum"><a href="tel:999" class="tel">999</a> or <a href="tel:112" class="tel">112</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENTAL HEALTH -->
+    <div class="section" data-s="mental health welfare crisis self-harm suicidal distress samaritans childline crisis text line emotional not coping safety alone physically safe">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-red">Immediate</span>
+        <span class="sec-title">Mental Health &amp; Welfare Crisis</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+
+        <h3>Student in Emotional Distress</h3>
+        <ol class="steps">
+          <li>Stay calm. Ask the GL or HF to stay with the student.</li>
+          <li>Establish whether the student is physically safe right now.</li>
+          <li>Notify Felipe by phone or message. Do not treat this as next-day if the student's safety is unclear.</li>
+          <li>YL minor: the GL is responsible for the student's immediate welfare and must remain with them.</li>
+        </ol>
+
+        <h3>Self-Harm or Suicidal Crisis</h3>
+        <div class="ibox">If a student has harmed themselves or is expressing intent to harm themselves:</div>
+        <ol class="steps">
+          <li>Call <a href="tel:999" class="tel">999</a> immediately if the student is in immediate physical danger.</li>
+          <li>Ensure someone is physically with the student at all times — do not leave them alone.</li>
+          <li>Call Felipe or Peter Lahiff.</li>
+          <li>Do not minimise, dismiss, or challenge what the student is saying.</li>
+        </ol>
+
+        <h3>Crisis Contacts</h3>
+        <div class="crow">
+          <div class="cname">Samaritans — 24hr, free, confidential</div>
+          <div class="cnum"><a href="tel:116123" class="tel">116 123</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Crisis Text Line — 24hr, free</div>
+          <div class="cnum"><span class="mono">Text HELLO to 50808</span></div>
+        </div>
+        <div class="crow">
+          <div class="cname">ISPCC Childline — under 18, 24hr, free</div>
+          <div class="cnum"><a href="tel:1800666666" class="tel">1800 666 666</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIRE -->
+    <div class="section" data-s="fire evacuation 999 aparto dublin nest residence host family building evacuate re-enter brigade">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-red">Immediate</span>
+        <span class="sec-title">Fire &amp; Evacuation</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="ibox">Call 999 immediately. Do not call FL contacts before calling emergency services.</div>
+
+        <h3>Host Family (YL or High School)</h3>
+        <ol class="steps">
+          <li>Everyone evacuates immediately. Do not re-enter under any circumstances.</li>
+          <li>Caller dials <a href="tel:999" class="tel">999</a> (fire brigade) or confirms it has already been called.</li>
+          <li>Caller confirms everyone is accounted for and safe, then calls you back.</li>
+          <li>You notify Felipe immediately.</li>
+          <li>If anyone is unaccounted for: the fire brigade takes control. Do not re-enter.</li>
+        </ol>
+
+        <h3>Student Residence (Adults)</h3>
+        <ol class="steps">
+          <li>Call <a href="tel:999" class="tel">999</a>.</li>
+          <li>Contact residence emergency line:<br>
+            Aparto: <a href="tel:+353871702084" class="tel">+353 87 170 2084</a> (24h security)<br>
+            Dublin Nest: <a href="tel:0834834440" class="tel">083 483 4440</a>
+          </li>
+          <li>Notify Felipe.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- MISSING STUDENT -->
+    <div class="section" data-s="missing student YL minor under 18 not located 30 minutes danger GL host family check friends nearby 999">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-red">Immediate</span>
+        <span class="sec-title">Missing Student (YL Minor)</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="ibox">Under 18. If not located after 30 minutes, escalate. Do not wait 30 minutes if you are concerned about danger — call 999 immediately.</div>
+        <ol class="steps">
+          <li>Ask the HF and GL when the student was last seen and who they were with.</li>
+          <li>Ask the GL to check with other GLs and nearby host families.</li>
+          <li>If not located within 30 minutes: contact Felipe immediately.</li>
+          <li>If there is any indication of immediate danger: call <a href="tel:999" class="tel">999</a> immediately. Do not wait for 30 minutes.</li>
+        </ol>
+        <p class="note">We do not hold student mobile numbers. The GL contacts the student directly and checks with friends in nearby families.</p>
+      </div>
+    </div>
+
+    <!-- CURFEW BREACH -->
+    <div class="section" data-s="curfew breach 22:00 student not home host family GL group leader 15 30 minutes">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-amber">Tonight</span>
+        <span class="sec-title">Curfew Breach — 22:00</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p>Applies to all Mini-Stay students. If a host family calls because a student has not come home:</p>
+        <ol class="steps">
+          <li>Ask the HF when the student was last seen and who they were with.</li>
+          <li>Call the GL. The GL contacts the student directly — we do not hold student mobile numbers. GL checks with friends in nearby families.</li>
+          <li>If GL cannot locate the student within 15–30 minutes, treat as missing — <strong>see Missing Student section.</strong></li>
+          <li>Email the accommodation team with a note of the breach regardless of outcome.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- MEDICAL -->
+    <div class="section" data-s="medical emergency GP OOH out of hours hospital DubDoc NorthDoc MIDOC Mater Beaumont James Midland fever fracture vomiting illness injury unconscious anaphylaxis ambulance">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-amber">Tonight</span>
+        <span class="sec-title">Medical Emergencies</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="ibox">Life-threatening: call 999 or 112 immediately. Do not call FL contacts first. Then notify Felipe.</div>
+
+        <h3>Decision Guide</h3>
+        <table class="dtable">
+          <tr>
+            <td class="sit-red">Unconscious, not breathing, severe bleeding, chest pain, anaphylaxis</td>
+            <td><strong><a href="tel:999" class="tel">999</a>/<a href="tel:112" class="tel">112</a> immediately.</strong> Notify Felipe.</td>
+          </tr>
+          <tr>
+            <td class="sit-amber">High fever, suspected fracture, bad fall, severe vomiting</td>
+            <td>GP out-of-hours (below). GL or HF accompanies student. Email relevant manager.</td>
+          </tr>
+          <tr>
+            <td class="sit-green">Cold, headache, mild stomach upset</td>
+            <td>Advise rest and pharmacy. GP in the morning. Not an OOH case.</td>
+          </tr>
+        </table>
+
+        <h3>GP Out-of-Hours</h3>
+        <div class="crow">
+          <div class="cname">DubDoc — Dublin · Mon–Fri 6pm–8am | 24hr weekends &amp; bank holidays</div>
+          <div class="cnum"><a href="tel:014545607" class="tel">01 454 5607</a></div>
+          <div class="cname">Meath Primary Care Campus, Heytesbury St, D8</div>
+        </div>
+        <div class="crow">
+          <div class="cname">NorthDoc — North Dublin · Mon–Fri 6pm–8am | 24hr weekends &amp; bank holidays</div>
+          <div class="cnum"><a href="tel:0818224476" class="tel">0818 22 44 76</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">MIDOC — Athlone · Mon–Fri 6pm–midnight &amp; midnight–8am | 24hr weekends</div>
+          <div class="cnum"><a href="tel:1800302702" class="tel">1800 302 702</a></div>
+          <div class="cname">Clonbrusk Primary Care Centre, Athlone</div>
+        </div>
+
+        <h3>Hospitals — A&amp;E</h3>
+        <div class="crow">
+          <div class="cname">Mater Hospital A&amp;E — Dublin North</div>
+          <div class="cnum">Eccles Street, Dublin 7</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Beaumont Hospital A&amp;E — Dublin North</div>
+          <div class="cnum">Beaumont Road, Dublin 9</div>
+        </div>
+        <div class="crow">
+          <div class="cname">St. James's Hospital A&amp;E — Dublin South</div>
+          <div class="cnum">James's Street, Dublin 8</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Midland Regional Mullingar — Athlone (~30 min)</div>
+          <div class="cnum">Mullingar, Co. Westmeath</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Midland Regional Tullamore — Athlone (~35 min)</div>
+          <div class="cnum">Arden Road, Tullamore, R35 NY51</div>
+        </div>
+
+        <h3>By Programme</h3>
+        <p><strong>Mini-Stay (YL):</strong> Help caller contact the GL. GL decides on GP appointment. If HF is not comfortable with GL's decision, the GL should book one regardless. GL accompanies the student. Insurance: ETO or parents — ask GL for their 24hr helpline.</p>
+        <p><strong>High School:</strong> Host family arranges and accompanies. Costs reimbursed from contingency fund. Contact Felipe if FL needs to authorise payment over the phone.</p>
+        <p><strong>Adults:</strong> Adult students manage their own medical care. Provide GP OOH numbers or hospital addresses.</p>
+      </div>
+    </div>
+
+    <!-- STUDENT FEELS UNSAFE -->
+    <div class="section" data-s="student unsafe uncomfortable host family behaviour concern Dublin Athlone ruth elaine annette not confront">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-amber">Tonight</span>
+        <span class="sec-title">Student Feels Unsafe with Host Family</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p class="note">Below the threshold of an immediate child protection emergency. If it escalates, go to the Child Protection section immediately.</p>
+        <ol class="steps">
+          <li>Listen carefully. Take the concern seriously. Do not dismiss it or imply the caller is overreacting.</li>
+          <li>Establish whether the student is physically safe right now. If not — <strong>Child Protection section immediately.</strong></li>
+          <li>Contact the Accommodation Manager for the relevant location:<br>
+            <strong>Dublin:</strong> Ruth Doran — <a href="mailto:ruth@flireland.com" class="eml">ruth@flireland.com</a> | Elaine Stokes — <a href="mailto:elaine@flireland.com" class="eml">elaine@flireland.com</a><br>
+            <strong>Athlone:</strong> Annette Donoghue — <a href="mailto:annette@flireland.com" class="eml">annette@flireland.com</a>
+          </li>
+          <li>If accommodation manager is unreachable and situation cannot wait: contact Felipe.</li>
+          <li>Do not contact the host family directly about the concern at this stage.</li>
+          <li>Send a written summary to accommodation manager and Felipe: what was reported, by whom, at what time, student's current location and wellbeing.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ARRIVAL ISSUES -->
+    <div class="section" data-s="arrival issues staff transport flight delayed not on flight lost luggage booking form live schedule host family not home departure taxi">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-amber">Tonight</span>
+        <span class="sec-title">Arrival Issues</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="crow">
+          <div class="cname">YL Arrivals Phone</div>
+          <div class="cnum"><a href="tel:+353851141168" class="tel">+353 85 114 1168</a></div>
+        </div>
+
+        <h3>Can't Find FL Staff Member</h3>
+        <p>Check the live schedule — both GLs and FL staff have access. If not there, check the Booking Form under that group's tab. Call YL Arrivals: <a href="tel:+353851141168" class="tel">+353 85 114 1168</a>.</p>
+
+        <h3>Flight Delayed</h3>
+        <p>Arrival staff hold HF email and will send updates. Families are advised to check DAA Flight Tracker. No action needed unless arrival staff cannot be reached.</p>
+
+        <h3>Student Won't Make It / Not on Flight</h3>
+        <p>Contact the HF to advise (number on Booking Form). Any pairing changes wait until the next working day. Alert arrival staff if the group is already in transit.</p>
+
+        <h3>Lost Luggage</h3>
+        <p><strong>Dublin:</strong> GLs call arrival staff. If multiple GLs, one stays with the group while the other waits with the student(s).<br>
+        <strong>Athlone:</strong> GLs call the emergency phone. Same split. Advise the GL to file a report with the airline at the airport.</p>
+
+        <h3>Host Family Not at Home</h3>
+        <p>Their number is on the Booking Form. Contact the GL if the HF cannot be reached.</p>
+
+        <h3>Host Family Did Not Turn Up for Departure</h3>
+        <p>Call the host family. If no response, book a taxi:<br>
+        Dublin: <a href="tel:018338888" class="tel">01 833 8888</a> (Dial-a-Cab / FL account)<br>
+        Athlone: <a href="tel:+353851113333" class="tel">+353 85 111 3333</a> (Cool Cabs / Danny)<br>
+        Notify Felipe by email.</p>
+      </div>
+    </div>
+
+    <!-- WHO TO EMAIL -->
+    <div class="section" data-s="email who to email accommodation activities class Dublin Athlone adult felipe ruth elaine annette teresa joanna gordana beatriz lucas fernanda next working day follow up">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Tomorrow</span>
+        <span class="sec-title">Who to Email (Next Working Day)</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p class="note">Send a follow-up email before ending the call. Always CC the relevant coordinator on programme-specific issues.</p>
+
+        <h3>All YL Accommodation Issues</h3>
+        <div class="crow">
+          <div class="cname">Felipe Fogo — YL Programme Manager</div>
+          <div><a href="mailto:felipe@flireland.com" class="eml">felipe@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Fernanda Breder — Adult Residence only</div>
+          <div><a href="mailto:fernanda@flireland.com" class="eml">fernanda@flireland.com</a></div>
+        </div>
+
+        <h3>Dublin Mini-Stay</h3>
+        <div class="crow">
+          <div class="cname">Accommodation</div>
+          <div><a href="mailto:ruth@flireland.com" class="eml">ruth@flireland.com</a> | <a href="mailto:elaine@flireland.com" class="eml">elaine@flireland.com</a></div>
+          <div class="cname" style="margin-top:3px;">CC: accommodation@flireland.com · irma@flireland.com · felipe@flireland.com</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Activities &amp; Transport — Teresa Orgilles</div>
+          <div><a href="mailto:teresa@flireland.com" class="eml">teresa@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Class Issues — Beatriz Pagamisse (Senior Teacher)</div>
+          <div><a href="mailto:beatriz@flireland.com" class="eml">beatriz@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">CC on all Dublin Mini-Stay — Lucas Dalabona (YL Dublin Manager)</div>
+          <div><a href="mailto:lucas@flireland.com" class="eml">lucas@flireland.com</a></div>
+        </div>
+
+        <h3>Athlone Mini-Stay</h3>
+        <div class="crow">
+          <div class="cname">Accommodation — Annette Donoghue</div>
+          <div><a href="mailto:annette@flireland.com" class="eml">annette@flireland.com</a></div>
+          <div class="cname" style="margin-top:3px;">CC: accommodation@flireland.com · irma@flireland.com · felipe@flireland.com</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Activities &amp; Transport — Joanna Abram</div>
+          <div><a href="mailto:joanna@flireland.com" class="eml">joanna@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">CC on all Athlone — Gordana Stanic (YL Athlone Coordinator)</div>
+          <div><a href="mailto:gordana@flireland.com" class="eml">gordana@flireland.com</a></div>
+        </div>
+
+        <h3>Adult Programmes</h3>
+        <div class="crow">
+          <div class="cname">Admissions queries</div>
+          <div><a href="mailto:bookings@flireland.com" class="eml">bookings@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Students currently on course</div>
+          <div><a href="mailto:studentsupport@flireland.com" class="eml">studentsupport@flireland.com</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MINI-STAY GROUPS -->
+    <div class="section" data-s="mini-stay young learner groups YL Dublin Athlone Spain Italy Austria Hungary 14 16 host family GL group leader ETO booking form O'Gradys Nika Flagline Cool Cabs pairing change activity lost passport wallet arrested immigration rain staff cancel">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">Mini-Stay — YL Groups</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p class="note">Visiting groups from European schools (mainly Spain, Italy, Austria, Hungary). Students typically 14–16. Centres: Dublin and Athlone.</p>
+
+        <h3>Finding Information</h3>
+        <p><strong>Live Schedule:</strong> Flights, arrival times, collection points, assigned staff, transport, GL contacts, weekend plans.</p>
+        <p><strong>Booking Form (Google Sheets):</strong> One tab per group. HF assignments, contact numbers, medical notes.</p>
+
+        <h3>Pairing Change Request</h3>
+        <p>Not possible out of hours. Accommodation team handles it next working day.<br>
+        Dublin: <a href="mailto:ruth@flireland.com" class="eml">ruth@flireland.com</a>, <a href="mailto:elaine@flireland.com" class="eml">elaine@flireland.com</a><br>
+        Athlone: <a href="mailto:annette@flireland.com" class="eml">annette@flireland.com</a><br>
+        CC both: <a href="mailto:accommodation@flireland.com" class="eml">accommodation@flireland.com</a>, <a href="mailto:irma@flireland.com" class="eml">irma@flireland.com</a>, <a href="mailto:felipe@flireland.com" class="eml">felipe@flireland.com</a></p>
+
+        <h3>Activity Changes</h3>
+        <p>GLs may choose different activities but are then fully responsible for the group. FL cannot guarantee the assigned staff member will accompany them. Must be confirmed with FL during working hours. If GLs stay late in the city: HF must be informed and is not expected to provide dinner.</p>
+
+        <h3>Lost Wallet, ID, or Passport</h3>
+        <ol class="steps">
+          <li>Advise GL to report the loss to the Garda station and get a written report for embassy and insurance purposes.</li>
+          <li>Check with lost property at the location where it was lost. Dublin City: Store Street Garda Station.</li>
+          <li>For passports: advise GL to contact the relevant embassy — they need the Garda report and passport photos.</li>
+        </ol>
+        <p class="note">Insurance is the ETO's or parents' responsibility. Ask the GL for their insurance provider and 24hr helpline.</p>
+
+        <h3>Student Arrested</h3>
+        <p>Advise the GL to attend the Garda station immediately, ensure the student sincerely apologises, and that any items are returned. Notify Felipe by email.</p>
+
+        <h3>Immigration Refuses Student Entry</h3>
+        <p>Check the booking on Intrinsiq. FL cannot challenge the decision and cannot accommodate the student.</p>
+
+        <h3>Missing Passport at Departure</h3>
+        <p>GLs are responsible. Advise on embassy location, nearest Garda station, and photo booth.</p>
+
+        <h3>Rain — Activity Cannot Proceed</h3>
+        <p>Handled by the FL staff member on duty with the GL. All activity plans should have a shelter location agreed in advance.</p>
+
+        <h3>Staff Cancel (Short Notice) — Weekend Excursion</h3>
+        <p>Offer GL the option to proceed without FL staff. Email the Mini-Stay team to arrange compensation or alternative.</p>
+
+        <h3>HF Outsourcing Contacts</h3>
+        <div class="crow">
+          <div class="cname">HFDI — Marica</div>
+          <div class="cnum"><a href="tel:+353876892902" class="tel">+353 87 689 2902</a></div>
+          <div><a href="mailto:info@hostfamilydublinireland.ie" class="eml">info@hostfamilydublinireland.ie</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Famworld — Rohan</div>
+          <div class="cnum"><a href="tel:+353876212902" class="tel">+353 87 621 2902</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HIGH SCHOOL -->
+    <div class="section" data-s="high school long-stay semester year host family Irish secondary Chiara Kenny David Reddin Flagline Dial-a-Cab contingency fund illness injury weekend excursion agent">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">High School Programme</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p class="note">Long-stay students (semester or full academic year) living with host families, attending Irish secondary schools.</p>
+        <p>Flights and transfers for the full year are on a spreadsheet shared with <a href="mailto:emergency@flireland.com" class="eml">emergency@flireland.com</a> — check there first.</p>
+
+        <h3>Finding Information</h3>
+        <p><strong>HS Flights &amp; Transfers Spreadsheet:</strong> Shared with emergency@flireland.com. Student name, HF name, transfer details, phone numbers.</p>
+        <p><strong>Intrinsiq:</strong> HF profiles and contact details. Login: emergency@flireland.com</p>
+        <p><strong>Agent Contact Info Spreadsheet:</strong> Shared with emergency@flireland.com.</p>
+
+        <h3>Transport Contacts (HS)</h3>
+        <div class="warn-bar">⚠️ Anderson (Uabroad) must NOT be used for any High School transfers. He has not completed Garda Vetting and cannot legally transport under-18s for FL. Do not book him under any circumstances for HS students.</div>
+        <div class="crow">
+          <div class="cname">Dublin — Dial-a-Cab / Malahide Cabs (FL account)</div>
+          <div class="cnum"><a href="tel:018338888" class="tel">01 833 8888</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Dublin — Chiara Kenny</div>
+          <div class="cnum"><a href="tel:+35387643441" class="tel">+353 87 643 441</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Athlone — Flagline (Niall)</div>
+          <div class="cnum"><a href="tel:+353862633310" class="tel">+353 86 263 3310</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Athlone — David Reddin (mileage claim — inform Selina)</div>
+          <div class="cnum"><a href="tel:+353866646871" class="tel">+353 86 664 6871</a></div>
+        </div>
+
+        <h3>Student Illness or Injury</h3>
+        <p>The host family is responsible for arranging appointments and accompanying the student. The HF must inform FL.</p>
+        <p>Costs: HF pays and will be reimbursed from the contingency fund. If FL needs to pay over the phone in advance, contact Felipe to confirm authorisation. See Medical section for GP OOH and hospital contacts.</p>
+
+        <h3>Weekend Excursions</h3>
+        <p>Details are emailed to emergency@flireland.com in advance. Check that inbox for any queries about weekend excursions.</p>
+      </div>
+    </div>
+
+    <!-- ADULT PROGRAMMES -->
+    <div class="section" data-s="adult programmes Anderson ISA Citylink Aircoach Aparto Dublin Nest HFDI Famworld transfer check-in flight delayed luggage missing Erasmus residence">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">Adult Programmes</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <p class="note">Essential information for the current week is sent to <a href="mailto:emergency@flireland.com" class="eml">emergency@flireland.com</a> every Friday. Check that email first.</p>
+
+        <h3>Transfer Contacts (Adults)</h3>
+        <div class="warn-bar">⚠️ Anderson (Uabroad) is for adults and GLs only — never for under-18s.</div>
+        <div class="crow">
+          <div class="cname">Anderson / Uabroad — adults &amp; GLs ONLY</div>
+          <div class="cnum"><a href="tel:+353834262664" class="tel">+353 83 426 2664</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">ISA</div>
+          <div class="cnum"><a href="tel:+353876314971" class="tel">+353 87 631 4971</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Bus to Athlone (Citylink/Aircoach)</div>
+          <div class="cnum">Fixed times — if missed, student buys new ticket</div>
+        </div>
+        <div class="crow">
+          <div class="cname">Taxi backup — Dublin: Dial-a-Cab</div>
+          <div class="cnum"><a href="tel:018338888" class="tel">01 833 8888</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Taxi backup — Athlone: Cool Cabs (Danny)</div>
+          <div class="cnum"><a href="tel:+353851113333" class="tel">+353 85 111 3333</a></div>
+        </div>
+
+        <h3>Residence Check-In Issues</h3>
+        <div class="crow">
+          <div class="cname">Aparto (Dublin)</div>
+          <div class="cnum"><a href="tel:015395158" class="tel">01 539 5158</a></div>
+          <div class="cname">24h security</div>
+          <div class="cnum"><a href="tel:+353871702084" class="tel">+353 87 170 2084</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Dublin Nest</div>
+          <div class="cnum"><a href="tel:0834834440" class="tel">083 483 4440</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">ISA</div>
+          <div class="cnum"><a href="tel:+353876314971" class="tel">+353 87 631 4971</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">HFDI — Marica</div>
+          <div class="cnum"><a href="tel:+353876892902" class="tel">+353 87 689 2902</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Famworld — Rohan</div>
+          <div class="cnum"><a href="tel:+353876212902" class="tel">+353 87 621 2902</a></div>
+        </div>
+
+        <h3>Common Adult Issues</h3>
+        <table class="dtable">
+          <tr><td>Can't find host family house</td><td>Put the student in touch with the host directly. If through a provider, use emergency contact above.</td></tr>
+          <tr><td>Flight delayed / cancelled / missed</td><td>Inform the HF of new arrival time — not all hosts are on WhatsApp. Contact details in Intrinsiq.</td></tr>
+          <tr><td>Lost luggage</td><td>Direct student to the airline to file a report.</td></tr>
+          <tr><td>Student missing (adult)</td><td>Clarify circumstances with host, flatmate, or friend. If warranted, assist in reporting to Gardaí.</td></tr>
+          <tr><td>Student not moved out</td><td>Check end date on Intrinsiq. Call student and ask them to vacate.</td></tr>
+          <tr><td>Erasmus+ bank holiday activity query</td><td>Check Friday arrivals email for activity details.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- FL CONTACTS -->
+    <div class="section" data-s="FL internal contacts Felipe Peter David Lucas Ruth Elaine Annette Teresa Joanna Gordana Beatriz Fernanda arrivals accommodation irma">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">FL Internal Contacts</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <h3>Escalation Contacts</h3>
+        <div class="crow">
+          <div class="cname">Felipe Fogo — YL / Accommodation</div>
+          <div class="cnum">Number saved on phone</div>
+          <div><a href="mailto:felipe@flireland.com" class="eml">felipe@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Peter Lahiff — Child Protection &amp; H&amp;S</div>
+          <div class="cnum">Number saved on phone</div>
+        </div>
+        <div class="crow">
+          <div class="cname">David Ganly — All other escalations</div>
+          <div class="cnum">Number saved on phone</div>
+        </div>
+
+        <h3>Dublin Team</h3>
+        <div class="crow">
+          <div class="cname">Lucas Dalabona — YL Dublin Manager</div>
+          <div><a href="mailto:lucas@flireland.com" class="eml">lucas@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Ruth Doran — YL Dublin Accommodation</div>
+          <div><a href="mailto:ruth@flireland.com" class="eml">ruth@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Elaine Stokes — YL Dublin Accommodation</div>
+          <div><a href="mailto:elaine@flireland.com" class="eml">elaine@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Teresa Orgilles — YL Dublin Activities</div>
+          <div><a href="mailto:teresa@flireland.com" class="eml">teresa@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Beatriz Pagamisse — Dublin Senior Teacher</div>
+          <div><a href="mailto:beatriz@flireland.com" class="eml">beatriz@flireland.com</a></div>
+        </div>
+
+        <h3>Athlone Team</h3>
+        <div class="crow">
+          <div class="cname">Gordana Stanic — YL Athlone Coordinator</div>
+          <div><a href="mailto:gordana@flireland.com" class="eml">gordana@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Annette Donoghue — YL Athlone Accommodation</div>
+          <div><a href="mailto:annette@flireland.com" class="eml">annette@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Joanna Abram — YL Athlone Activities</div>
+          <div><a href="mailto:joanna@flireland.com" class="eml">joanna@flireland.com</a></div>
+        </div>
+
+        <h3>Other</h3>
+        <div class="crow">
+          <div class="cname">Fernanda Breder — Adult Residence</div>
+          <div><a href="mailto:fernanda@flireland.com" class="eml">fernanda@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">YL Arrivals</div>
+          <div class="cnum"><a href="tel:+353851141168" class="tel">+353 85 114 1168</a></div>
+          <div><a href="mailto:arrivals@flireland.com" class="eml">arrivals@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Group Accommodation CC</div>
+          <div><a href="mailto:accommodation@flireland.com" class="eml">accommodation@flireland.com</a> · <a href="mailto:irma@flireland.com" class="eml">irma@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Admissions</div>
+          <div><a href="mailto:bookings@flireland.com" class="eml">bookings@flireland.com</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Student Support</div>
+          <div><a href="mailto:studentsupport@flireland.com" class="eml">studentsupport@flireland.com</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSPORT -->
+    <div class="section" data-s="transport Dublin Athlone bus taxi O'Gradys Nika Flagline Cool Cabs Dial-a-Cab Malahide Anderson Uabroad Chiara Kenny David Reddin garda vetting under 18">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">Transport Contacts</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="warn-bar">⚠️ Anderson (Uabroad) must NOT be used for anyone under 18. No Garda Vetting. Adults and GLs only — always verify age before booking.</div>
+
+        <h3>Dublin</h3>
+        <div class="crow">
+          <div class="cname">O'Gradys (bus) — Peter</div>
+          <div class="cnum"><a href="tel:+353863896969" class="tel">+353 86 389 6969</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Nika Tours (bus) — Denis</div>
+          <div class="cnum"><a href="tel:+353861776034" class="tel">+353 86 177 6034</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Dial-a-Cab / Malahide Cabs (FL account)</div>
+          <div class="cnum"><a href="tel:018338888" class="tel">01 833 8888</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Chiara Kenny (HS taxi)</div>
+          <div class="cnum"><a href="tel:+35387643441" class="tel">+353 87 643 441</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Anderson / Uabroad ⚠️ Adults &amp; GLs ONLY — never for under-18s</div>
+          <div class="cnum"><a href="tel:+353834262664" class="tel">+353 83 426 2664</a></div>
+        </div>
+
+        <h3>Athlone</h3>
+        <div class="crow">
+          <div class="cname">Flagline (bus) — Niall</div>
+          <div class="cnum"><a href="tel:+353862633310" class="tel">+353 86 263 3310</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Cool Cabs / Danny (FL billed later — advise caller they may be charged)</div>
+          <div class="cnum"><a href="tel:+353851113333" class="tel">+353 85 111 3333</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">David Reddin (HS mileage claim — inform Selina)</div>
+          <div class="cnum"><a href="tel:+353866646871" class="tel">+353 86 664 6871</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCOMMODATION PROVIDERS -->
+    <div class="section" data-s="accommodation providers HFDI Famworld ISA Aparto Dublin Nest Marica Rohan host family provider residence security tugu cleaner">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-green">Reference</span>
+        <span class="sec-title">Accommodation Providers</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="crow">
+          <div class="cname">HFDI — Marica</div>
+          <div class="cnum"><a href="tel:+353876892902" class="tel">+353 87 689 2902</a></div>
+          <div><a href="mailto:info@hostfamilydublinireland.ie" class="eml">info@hostfamilydublinireland.ie</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Famworld — Rohan</div>
+          <div class="cnum"><a href="tel:+353876212902" class="tel">+353 87 621 2902</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">ISA</div>
+          <div class="cnum"><a href="tel:+353876314971" class="tel">+353 87 631 4971</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Aparto (Dublin) — main</div>
+          <div class="cnum"><a href="tel:015395158" class="tel">01 539 5158</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Aparto (Dublin) — 24h security</div>
+          <div class="cnum"><a href="tel:+353871702084" class="tel">+353 87 170 2084</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Dublin Nest</div>
+          <div class="cnum"><a href="tel:0834834440" class="tel">083 483 4440</a></div>
+        </div>
+        <div class="crow">
+          <div class="cname">Tugu (cleaner)</div>
+          <div class="cnum"><a href="tel:+353834781734" class="tel">+353 83 478 1734</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEM LOGINS -->
+    <div class="section" data-s="system logins intrinsiq email password emergency bookings arrivals PIN credentials">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-blue">Logins</span>
+        <span class="sec-title">System Logins</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <div class="ibox blue">Confidential — for on-call staff only. Do not share outside the on-call roster.</div>
+        <div class="drow">
+          <div class="dlabel">Emergency Phone Number</div>
+          <div class="dval"><a href="tel:0871037744" class="tel">087 103 7744</a></div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Emergency Phone PIN</div>
+          <div class="dval">8291</div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Emergency Email</div>
+          <div class="dval"><a href="mailto:emergency@flireland.com" class="eml">emergency@flireland.com</a></div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Emergency Email Password</div>
+          <div class="dval">FutureLearning</div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Intrinsiq Login</div>
+          <div class="dval"><a href="mailto:emergency@flireland.com" class="eml">emergency@flireland.com</a></div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Intrinsiq Password</div>
+          <div class="dval">Malahide&amp;205*</div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Bookings Email — read only, do NOT send or edit</div>
+          <div class="dval"><a href="mailto:bookings@flireland.com" class="eml">bookings@flireland.com</a></div>
+        </div>
+        <div class="drow">
+          <div class="dlabel">Bookings Email Password</div>
+          <div class="dval">Ukr7ar2Ds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIFT START / ORIENTATION -->
+    <div class="section" data-s="shift start orientation checklist handover booking form WhatsApp away message Bookings in Progress programmes active call forwarding key terms ETO GL HF mini-stay high school">
+      <button class="sec-btn" onclick="tog(this)">
+        <span class="tier-badge tb-orange">Orientation</span>
+        <span class="sec-title">Shift Start Checklist &amp; Orientation</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sec-body">
+        <h3>At the Start of Every Shift</h3>
+        <ol class="steps">
+          <li>Check for handover notes from the previous phone holder about ongoing issues.</li>
+          <li>Confirm current groups' Booking Forms are starred in Google Drive.</li>
+          <li>Turn on WhatsApp Away Message: WhatsApp → ⋮ → Business Tools → Away Message → On</li>
+          <li>Confirm numbers for Felipe, Peter, and David are saved on the phone.</li>
+          <li>Check the Bookings in Progress spreadsheet to know which programmes are active.</li>
+        </ol>
+
+        <h3>What This Phone Is For</h3>
+        <p>The emergency phone covers all FL programmes outside of office hours. Your goal is to resolve issues as far as possible using the information available, without contacting other staff unless necessary.</p>
+        <p>Most issues can and should wait until the next working day — your role is to triage, reassure, and document. Changes to accommodation, pairings, or schedules cannot be made out of hours; advise the caller it will be handled in the morning and send an email before you end the call.</p>
+        <p><strong>Respond within 15 minutes.</strong> If a follow-up is needed, email the relevant person from the emergency phone before ending the call.</p>
+
+        <h3>Key Terms</h3>
+        <table class="rtable">
+          <tr><td>ETO</td><td>Educational Tour Operator. The agency or school that books groups with FL.</td></tr>
+          <tr><td>GL</td><td>Group Leader. Adult(s) travelling with a student group. First point of contact for all YL group issues.</td></tr>
+          <tr><td>HF</td><td>Host Family. Contact directly for arrivals, medical issues, or HF-specific problems.</td></tr>
+          <tr><td>Mini-Stay</td><td>Short group visits (1–3 weeks) from European schools.</td></tr>
+          <tr><td>High School</td><td>Long-stay students (semester or full year) in HFs, attending Irish secondary schools.</td></tr>
+          <tr><td>Adults</td><td>Adult language students. May be in HFs, ISA/HFDI, Aparto, or Dublin Nest.</td></tr>
+          <tr><td>Intrinsiq</td><td>FL's school management system. Student profiles, HF details, contact numbers.</td></tr>
+          <tr><td>Booking Form</td><td>Google Sheets — one tab per group. HF assignments, contact numbers, medical notes.</td></tr>
+        </table>
+
+        <h3>Saving Contacts</h3>
+        <p>Always save new numbers as: <span class="mono">First Name Last Name — Role</span><br>
+        e.g. <span class="mono">John Smith — Host Family Dublin</span></p>
+
+        <h3>Call Forwarding</h3>
+        <p>Phone → ⋮ → Settings → Supplementary Services → Call Forwarding → Enable/Disable</p>
+      </div>
+    </div>
+
+    <div id="no-results">No sections match your search.</div>
+
+  </main>
+</div>
+
+<script>
+  // ===== PIN =====
+  const PIN = '8291';
+  let entered = '';
+
+  function renderDots() {
+    for (let i = 0; i < 4; i++) {
+      const d = document.getElementById('d' + i);
+      d.classList.toggle('filled', i < entered.length);
+      d.classList.remove('error');
+    }
+  }
+
+  function pinPress(digit) {
+    if (entered.length >= 4) return;
+    entered += digit;
+    renderDots();
+    if (entered.length === 4) setTimeout(checkPin, 180);
+  }
+
+  function pinDelete() {
+    entered = entered.slice(0, -1);
+    renderDots();
+    document.getElementById('pin-err').textContent = '';
+  }
+
+  function checkPin() {
+    if (entered === PIN) {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').removeAttribute('hidden');
+    } else {
+      document.getElementById('pin-err').textContent = 'Incorrect PIN — try again';
+      for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('error');
+      const dots = document.getElementById('pin-dots');
+      dots.classList.remove('shake');
+      void dots.offsetWidth; // reflow
+      dots.classList.add('shake');
+      entered = '';
+      setTimeout(() => {
+        renderDots();
+        dots.classList.remove('shake');
+      }, 500);
+    }
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('app').hidden) {
+      if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+      if (e.key === 'Backspace') pinDelete();
+      if (e.key === 'Enter' && entered.length === 4) checkPin();
+    }
+  });
+
+  // ===== ACCORDION =====
+  function tog(btn) {
+    btn.closest('.section').classList.toggle('open');
+  }
+
+  // ===== SEARCH =====
+  function handleSearch(q) {
+    q = q.toLowerCase().trim();
+    const sections = document.querySelectorAll('#sections .section');
+    let visible = 0;
+
+    sections.forEach(sec => {
+      if (!q) {
+        sec.classList.remove('hidden');
+        visible++;
+        return;
+      }
+      const title = sec.querySelector('.sec-title').textContent.toLowerCase();
+      const meta  = (sec.dataset.s || '').toLowerCase();
+      const body  = sec.querySelector('.sec-body').textContent.toLowerCase();
+      const match = title.includes(q) || meta.includes(q) || body.includes(q);
+
+      if (match) {
+        sec.classList.remove('hidden');
+        sec.classList.add('open');
+        visible++;
+      } else {
+        sec.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+  }
+</script>
+
+</body>
+</html>
